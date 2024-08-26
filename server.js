@@ -17,9 +17,9 @@ var clients = [];
 // Establish MySQL database connection
 var db_config = {
   host: 'localhost',
-  user: 'demoweb1_demo01',
-  password: 'demoweb1_demo01',
-  database: 'demoweb1_demo01',
+  user: 'jvmm7625_sourceco_9in1_new',
+  password: 'jvmm7625_sourceco_9in1_new',
+  database: 'jvmm7625_sourceco_9in1_new',
   keepAlive: true,
 };
 
