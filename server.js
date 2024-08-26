@@ -16,10 +16,10 @@ var clients = [];
 
 // Establish MySQL database connection
 var db_config = {
-  host: '184.168.115.30',
-  user: 'jvmm7625_sourceco_9in1_new',
-  password: 'jvmm7625_sourceco_9in1_new',
-  database: 'jvmm7625_sourceco_9in1_new',
+  host: 'localhost',
+  user: 'demoweb1_demo01',
+  password: 'demoweb1_demo01',
+  database: 'demoweb1_demo01',
   keepAlive: true,
 };
 
