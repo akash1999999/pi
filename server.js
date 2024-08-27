@@ -16,7 +16,7 @@ var clients = [];
 
 // Establish MySQL database connection
 var db_config = {
-  host: 'localhost',
+  host: '184.168.115.30',
   user: 'demoweb1_demo01',
   password: 'demoweb1_demo01',
   database: 'demoweb1_demo01',
