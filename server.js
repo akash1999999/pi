@@ -92,19 +92,19 @@ function setcrash() {
       finalcrash =Math.floor(Math.random() * 6) + 2;
       //console.log('finalcrash0');
       //console.log(finalcrash,betamount);
-      repeatupdate(500);
+      repeatupdate(200);
      }else if(betamount<=100){
-      finalcrash =Math.floor(Math.random() * 6) + 1; 
-      //finalcrash =(Math.random() * 0.5 + 1).toFixed(3); 
+      //finalcrash =Math.floor(Math.random() * 6) + 1; 
+      finalcrash =(Math.random() * 0.5 + 1).toFixed(2); 
       //console.log('finalcrash100');
       //console.log(finalcrash,betamount);
-      repeatupdate(600);
+      repeatupdate(300);
      }else{
-      finalcrash =Math.floor(Math.random() * 6) + 1;
-      //finalcrash =(Math.random()* 0.5  + 1).toFixed(3); 
+      //finalcrash =Math.floor(Math.random() * 6) + 1;
+      finalcrash =(Math.random()* 0.5  + 1).toFixed(2); 
       //console.log('finalcrash12');
       //console.log(finalcrash,betamount);
-      repeatupdate(500);
+      repeatupdate(200);
      }
     }
   });
