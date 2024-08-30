@@ -94,12 +94,12 @@ function setcrash() {
       //console.log(finalcrash,betamount);
       repeatupdate(200);
      }else if(betamount<=100){
-      finalcrash =(Math.random() * 0.5 + 1).toFixed(2); 
+      finalcrash =Math.floor(Math.random() * 6) + 2; 
       //console.log('finalcrash100');
       //console.log(finalcrash,betamount);
       repeatupdate(300);
      }else{
-      finalcrash =(Math.random()* 0.5  + 1).toFixed(2); 
+      finalcrash =Math.floor(Math.random() * 6) + 2;
       //console.log('finalcrash12');
       //console.log(finalcrash,betamount);
       repeatupdate(200);
