@@ -90,7 +90,7 @@ function setcrash() {
      
      if(betamount==0){
       //finalcrash =Math.floor(Math.random() * 6) + 2;
-      finalcrash =(Math.random() * 0.5 + 1).toFixed(2);
+      finalcrash =(Math.random() * 0.5 + 1).toFixed(1);
       //console.log('finalcrash0');
       //console.log(finalcrash,betamount);
       repeatupdate(200);
