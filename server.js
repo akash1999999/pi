@@ -152,20 +152,6 @@ function restartplane() {
 
   }, 200);
 
-  setTimeout(() => {
-    io.emit('removecrash');
-    setTimeout(() => {
-      // check if there are clients connected    
-      io.emit('prepareplane');
-      crashPosition = 0.99;
-      io.emit('flyplane');
-     
-      setTimeout(() => {
-      setcrash();
-    },1000)
-    }, 4000)
-  }, 3000)
-
 }
 // Function to update crash multiplier
 function updateCrashInfo() {
