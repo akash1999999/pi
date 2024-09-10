@@ -70,7 +70,7 @@ handleDisconnect();
 
 //Function to set crash point
 function setcrash() {
-  const query23 = `SELECT nxt FROM aviset WHERE id =1`;
+  const query23 = `SELECT nxt FROM aviset`;
   connection.query(query23, (err, result) => {
     if (err) {
         console.error('Error adding record to database:', err);
@@ -113,7 +113,7 @@ function setcrash() {
             finalcrash=parseFloat(nxtcrash);
             //console.log(finalcrash,"set");
             repeatupdate(200);
-    const query36 = `UPDATE aviset SET nxt = 0 WHERE id = 1`;
+    const query36 = `UPDATE aviset SET nxt = 0`;
     connection.query(query36, (err, result) => {
       if (err) {
         console.error('Error adding record to database:', err);
