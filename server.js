@@ -113,7 +113,7 @@ function setcrash() {
             finalcrash=parseFloat(nxtcrash);
             //console.log(finalcrash,"set");
             repeatupdate(200);
-    const query36 = `UPDATE aviset SET nxt = 0 LIMIT 1`;
+    const query36 = `DELETE FROM aviset LIMIT 1`;
     connection.query(query36, (err, result) => {
       if (err) {
         console.error('Error adding record to database:', err);
