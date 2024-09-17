@@ -16,7 +16,7 @@ var clients = [];
 
 // Establish MySQL database connection
 var db_config = {
-  host: 'localhost',
+  host: '184.168.115.30',
   user: 'jvmm7625_sourceco_9in1_new',
   password: 'jvmm7625_sourceco_9in1_new',
   database: 'jvmm7625_sourceco_9in1_new',
@@ -70,7 +70,7 @@ handleDisconnect();
 
 //Function to set crash point
 function setcrash() {
-  const query23 = `SELECT nxt FROM aviset WHERE id =1`;
+  const query23 = `SELECT nxt FROM aviset LIMIT 1`;
   connection.query(query23, (err, result) => {
     if (err) {
         console.error('Error adding record to database:', err);
@@ -90,15 +90,18 @@ function setcrash() {
      
      if(betamount==0){
       finalcrash =Math.floor(Math.random() * 6) + 2;
+      //finalcrash =(Math.random() * 0.5 + 1).toFixed(1);
       //console.log('finalcrash0');
       //console.log(finalcrash,betamount);
       repeatupdate(200);
      }else if(betamount<=100){
+      //finalcrash =Math.floor(Math.random() * 6) + 1; 
       finalcrash =(Math.random() * 0.5 + 1).toFixed(2); 
       //console.log('finalcrash100');
       //console.log(finalcrash,betamount);
       repeatupdate(300);
      }else{
+      //finalcrash =Math.floor(Math.random() * 6) + 1;
       finalcrash =(Math.random()* 0.5  + 1).toFixed(2); 
       //console.log('finalcrash12');
       //console.log(finalcrash,betamount);
@@ -110,7 +113,7 @@ function setcrash() {
             finalcrash=parseFloat(nxtcrash);
             //console.log(finalcrash,"set");
             repeatupdate(200);
-    const query36 = `UPDATE aviset SET nxt = 0 WHERE id = 1`;
+    const query36 = `DELETE FROM aviset LIMIT 1`;
     connection.query(query36, (err, result) => {
       if (err) {
         console.error('Error adding record to database:', err);
