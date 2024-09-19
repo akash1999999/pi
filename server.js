@@ -210,10 +210,7 @@ io.on('connection', (socket) => {
               console.error('Error adding record to database:', err);
             } 
           });
-          let now_india = new Date();
-// Outputs: Date Thu Jun 08 2023 09:43:04 GMT+0530 (India Standard Time) 
-console.log(now_india);
-          const query = `INSERT INTO crashbetrecord (username, amount, time) VALUES ('${username}', ${amount}), ${now_india})`;
+          const query = `INSERT INTO crashbetrecord (username, amount) VALUES ('${username}', ${amount})`;
       
           connection.query(query, (err, result) => {
             if (err) {
