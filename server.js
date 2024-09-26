@@ -201,7 +201,7 @@ io.on('connection', (socket) => {
       }else{
         if(result[0].balance>amount){
           const query1 = `UPDATE users SET balance = balance - ${amount} WHERE username = '${username}'`;
-          betamount2=result[0].balance;
+          betamount2=result[0].balance-amount;
 
 
           connection.query(query1, (err, result) => {
