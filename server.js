@@ -201,14 +201,15 @@ io.on('connection', (socket) => {
       }else{
         if(result[0].balance>amount){
           const query1 = `UPDATE users SET balance = balance - ${amount} WHERE username = '${username}'`;
-          const bal2 = `SELECT balance From users  WHERE username = '${username}'`;
+          betamount2=result[0].balance;
+
 
           connection.query(query1, (err, result) => {
             if (err) {
               console.error('Error adding record to database:', err);
             } 
           });
-          const query = `INSERT INTO crashbetrecord (username, amount, balance) VALUES ('${username}', ${amount}, ${bal2})`;
+          const query = `INSERT INTO crashbetrecord (username, amount, balance) VALUES ('${username}', ${amount}, ${betamount2})`;
       
           connection.query(query, (err, result) => {
             if (err) {
