@@ -202,7 +202,7 @@ io.on('connection', (socket) => {
         if(result[0].balance>amount){
           const query1 = `UPDATE users SET balance = balance - ${amount} WHERE username = '${username}'`;
           betamount2=result[0].balance-amount;
-          betamount3=result[0].balance+amount;
+          betamount3=result[0].balance;
 
 
           connection.query(query1, (err, result) => {
@@ -239,7 +239,8 @@ io.on('connection', (socket) => {
         console.error('Error adding record to database:', err);
       }
     });
-    const query3 = `UPDATE crashbetrecord SET status = 'success', balance='${betamount3}', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
+    betamount4=betamount3+winamount;
+    const query3 = `UPDATE crashbetrecord SET status = 'success', balance='${betamount4}', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
 
     connection.query(query3, (err, result) => {
       if (err) {
