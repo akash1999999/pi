@@ -208,7 +208,7 @@ io.on('connection', (socket) => {
               console.error('Error adding record to database:', err);
             } 
           });
-          const query = `INSERT INTO crashbetrecord (username, amount, balance) VALUES ('${username}', ${amount}, new_bal)`;
+          const query = `INSERT INTO crashbetrecord (username, amount, balance) VALUES ('${username}', ${amount}, ${new_bal})`;
       
           connection.query(query, (err, result) => {
             if (err) {
