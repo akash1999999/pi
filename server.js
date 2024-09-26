@@ -232,10 +232,10 @@ io.on('connection', (socket) => {
     winamount=winamount.toFixed(2);
     console.log(winamount);
     const query2 = `UPDATE users SET balance = balance + ${winamount} WHERE username = '${username}'`;
-    const bal = `SELECT balance From users  WHERE username = '${username}'`;
-    connection.query(bal, (err, result) => {
-      if (err) {
-        console.error('Error adding record to database:', err);
+    const bal3 = `SELECT balance From users  WHERE username = '${username}'`;
+    connection.query(bal3, (err3, result) => {
+      if (err3) {
+        console.error('Error adding record to database:', err3);
       }else{
     betamount3=result[0].balance+winamount;
       } }
