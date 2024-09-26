@@ -240,7 +240,7 @@ io.on('connection', (socket) => {
       }
     });
     betamount4=betamount3+winamount;
-    const query3 = `UPDATE crashbetrecord SET status = 'success', balance='${betamount3}', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
+    const query3 = `UPDATE crashbetrecord SET status = 'success', balance='${betamount4}', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
 
     connection.query(query3, (err, result) => {
       if (err) {
