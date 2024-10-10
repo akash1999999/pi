@@ -239,8 +239,7 @@ io.on('connection', (socket) => {
         console.error('Error adding record to database:', err);
       }
     });
-    var betamount4=balance+winamount+betamount3;
-    const query3 = `UPDATE users SET balance = balance + ${winamount} WHERE username = '${username}'`;
+    var betamount4=balance+winamount;
           const query3 = `UPDATE crashbetrecord SET status = 'success', balance='${betamount4}', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
 
     connection.query(query3, (err, result) => {
