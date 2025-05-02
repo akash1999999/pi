@@ -16,10 +16,10 @@ var clients = [];
 
 // Establish MySQL database connection
 var db_config = {
-  host: 'localhost',
-  user: 'demoweb1_demo01',
-  password: 'demoweb1_demo01',
-  database: 'demoweb1_demo01',
+  host: '184.168.115.30',
+  user: 'jvmm7625_sourceco_9in1_new',
+  password: 'jvmm7625_sourceco_9in1_new',
+  database: 'jvmm7625_sourceco_9in1_new',
   keepAlive: true,
 };
 
@@ -70,7 +70,7 @@ handleDisconnect();
 
 //Function to set crash point
 function setcrash() {
-  const query23 = `SELECT nxt FROM aviset WHERE id =1`;
+  const query23 = `SELECT nxt FROM aviset LIMIT 1`;
   connection.query(query23, (err, result) => {
     if (err) {
         console.error('Error adding record to database:', err);
@@ -110,7 +110,7 @@ function setcrash() {
             finalcrash=parseFloat(nxtcrash);
             //console.log(finalcrash,"set");
             repeatupdate(200);
-    const query36 = `UPDATE aviset SET nxt = 0 WHERE id = 1`;
+    const query36 = `DELETE FROM aviset LIMIT 1`;
     connection.query(query36, (err, result) => {
       if (err) {
         console.error('Error adding record to database:', err);
@@ -170,13 +170,7 @@ function updateCrashInfo() {
   var cp=parseFloat(crashPosition);
   if ( fc > cp ) {
     var cPosition = parseFloat(crashPosition);
-    if (cPosition >= 5) {
-    crashPosition = (cPosition + 0.07).toFixed(2);
-} else if (cPosition >= 3) {
-    crashPosition = (cPosition + 0.03).toFixed(2);
-} else {
-    crashPosition = (cPosition + 0.01).toFixed(2);
-}
+    crashPosition=(cPosition+0.01).toFixed(2);
     io.emit('crash-update', crashPosition);
   } else {
     restartplane();
@@ -207,13 +201,16 @@ io.on('connection', (socket) => {
       }else{
         if(result[0].balance>amount){
           const query1 = `UPDATE users SET balance = balance - ${amount} WHERE username = '${username}'`;
+          betamount2=result[0].balance-amount;
+          betamount3=result[0].balance;
+
 
           connection.query(query1, (err, result) => {
             if (err) {
               console.error('Error adding record to database:', err);
             } 
           });
-          const query = `INSERT INTO crashbetrecord (username, amount) VALUES ('${username}', ${amount})`;
+          const query = `INSERT INTO crashbetrecord (username, amount, balance) VALUES ('${username}', ${amount}, ${betamount2})`;
       
           connection.query(query, (err, result) => {
             if (err) {
@@ -236,13 +233,14 @@ io.on('connection', (socket) => {
     winamount=winamount.toFixed(2);
     console.log(winamount);
     const query2 = `UPDATE users SET balance = balance + ${winamount} WHERE username = '${username}'`;
-
+    
     connection.query(query2, (err, result) => {
       if (err) {
         console.error('Error adding record to database:', err);
       }
     });
-    const query3 = `UPDATE crashbetrecord SET status = 'success', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
+    var betamount4=winamount+betamount3;
+          const query3 = `UPDATE crashbetrecord SET status = 'success', balance='${betamount4}', winpoint='${winpoint}' WHERE username = '${username}'  AND status = 'pending'`;
 
     connection.query(query3, (err, result) => {
       if (err) {
