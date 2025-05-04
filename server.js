@@ -172,3 +172,12 @@ setcrash();
 server.listen(port, () => {
   console.log(`Server running at :${port}/`);
 });
+
+
+
+// === Emit Events for Frontend Plane Animation ===
+io.emit('round_start'); // Notify frontend to start plane
+
+setTimeout(() => {
+    io.emit('round_end'); // Notify frontend to stop plane
+}, finalcrash * 1000);
