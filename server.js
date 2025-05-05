@@ -1,3 +1,4 @@
+
 const http = require('http');
 const socketIO = require('socket.io');
 const mysql = require('mysql');
@@ -26,14 +27,14 @@ let connection;
 
 function handleDisconnect() {
   connection = mysql.createConnection(db_config);
-  connection.connect(function (err) {
+  connection.connect(err => {
     if (err) {
       console.log('DB connection error:', err);
       setTimeout(handleDisconnect, 2000);
     }
   });
 
-  connection.on('error', function (err) {
+  connection.on('error', err => {
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
       handleDisconnect();
     } else {
@@ -66,12 +67,15 @@ function setcrash() {
               } else {
                 finalcrash = (Math.random() * 0.5 + 1).toFixed(2);
               }
+
+              io.emit('round_start', finalcrash);
               repeatupdate();
             }
           }
         );
       } else {
         finalcrash = parseFloat(nxtcrash);
+        io.emit('round_start', finalcrash);
         repeatupdate();
         connection.query(`DELETE FROM aviset LIMIT 1`, () => {});
       }
@@ -87,6 +91,7 @@ function restartplane() {
   setTimeout(() => {
     connection.query(`UPDATE crashbetrecord SET status = 'fail', winpoint=? WHERE status = 'pending'`, [crashPosition], () => {});
     io.volatile.emit('reset', 'resetting plane.....');
+    io.emit('round_end');
   }, 200);
 
   setTimeout(() => {
@@ -100,14 +105,13 @@ function restartplane() {
   }, 3000);
 }
 
-// ✅ Smoothed crash increment logic
 function updateCrashInfo() {
   const fc = parseFloat(finalcrash);
   const cp = parseFloat(crashPosition);
 
   if (fc > cp) {
-    let increment = 0.01 * Math.pow(cp, 0.8); // exponential growth
-    increment = Math.min(increment, 1); // limit it to avoid huge jumps
+    let increment = 0.01 * Math.pow(cp, 0.8);
+    increment = Math.min(increment, 1);
     crashPosition = (cp + increment).toFixed(2);
     io.emit('crash-update', crashPosition);
   } else {
@@ -116,10 +120,10 @@ function updateCrashInfo() {
 }
 
 function repeatupdate() {
-  fly = setInterval(updateCrashInfo, 50); // faster interval, smooth growth
+  fly = setInterval(updateCrashInfo, 50);
 }
 
-io.on('connection', (socket) => {
+io.on('connection', socket => {
   clients.push(socket.id);
   socket.emit('working', 'ACTIVE...!');
 
@@ -127,73 +131,43 @@ io.on('connection', (socket) => {
 
   socket.on('newBet', (username, amount) => {
     connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
-      if (!err && result.length > 0) {
-        if (result[0].balance >= amount) {
-          const betamount2 = result[0].balance - amount;
+      if (!err && result.length > 0 && result[0].balance >= amount) {
+        const betamount2 = result[0].balance - amount;
+        connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
 
-          connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
-
-          function getFormattedISTTime() {
-  const options = { timeZone: 'Asia/Kolkata' };
-  const date = new Date().toLocaleString('en-US', options);
-  const d = new Date(date);
-
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  const s = String(d.getSeconds()).padStart(2, '0');
-
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0'); // Months start at 0
-  const year = d.getFullYear();
-
-  return `${h}:${m}:${s} (${day}:${month}:${year})`;
-}
-
-
-        
-  const formattedTime = getFormattedISTTime();
-
-connection.query(
-  `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, ?)`,
-  [username, amount, betamount2, formattedTime],
-  () => {}
-);
-
-        }
+        const formattedTime = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Kolkata' }).replace(',', '');
+        connection.query(
+          `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, ?)`,
+          [username, amount, betamount2, formattedTime],
+          () => {}
+        );
       }
     });
   });
 
-socket.on('addWin', (username, amount, winpoint) => {
-  connection.query(
-    `SELECT SUM(amount) AS bets FROM crashbetrecord WHERE status ='pending' AND username = ?`,
-    [username],
-    (err, result) => {
-      if (!err && result[0].bets > 0) {
-        // Calculate win amount with full decimal
-        const winamount = ((amount * 98 / 100) * winpoint).toFixed(2);
+  socket.on('addWin', (username, amount, winpoint) => {
+    connection.query(
+      `SELECT SUM(amount) AS bets FROM crashbetrecord WHERE status ='pending' AND username = ?`,
+      [username],
+      (err, result) => {
+        if (!err && result[0].bets > 0) {
+          const winamount = ((amount * 98 / 100) * winpoint).toFixed(2);
 
-        connection.query(
-          `SELECT balance FROM users WHERE username = ?`,
-          [username],
-          (err, result) => {
+          connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
             if (!err && result.length > 0) {
               const currentBalance = parseFloat(result[0].balance);
               const totalBalance = (currentBalance + parseFloat(winamount)).toFixed(2);
 
-              // ✅ Update users table
               connection.query(
                 `UPDATE users SET balance = ? WHERE username = ?`,
                 [totalBalance, username],
                 () => {
-                  // ✅ Emit updated values
                   socket.emit('winUpdate', {
                     winamount: parseFloat(winamount).toFixed(2),
                     balance: parseFloat(totalBalance).toFixed(2),
                     winpoint: parseFloat(winpoint).toFixed(2),
                   });
 
-                  // ✅ Update crashbetrecord
                   connection.query(
                     `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
                     [totalBalance, winpoint, username],
@@ -202,15 +176,11 @@ socket.on('addWin', (username, amount, winpoint) => {
                 }
               );
             }
-          }
-        );
+          });
+        }
       }
-    }
-  );
-});
-
-
-
+    );
+  });
 });
 
 setcrash();
@@ -218,12 +188,3 @@ setcrash();
 server.listen(port, () => {
   console.log(`Server running at :${port}/`);
 });
-
-
-
-// === Emit Events for Frontend Plane Animation ===
-io.emit('round_start'); // Notify frontend to start plane
-
-setTimeout(() => {
-    io.emit('round_end'); // Notify frontend to stop plane
-}, finalcrash * 1000);
