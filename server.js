@@ -1,4 +1,3 @@
-
 const http = require('http');
 const socketIO = require('socket.io');
 const mysql = require('mysql');
@@ -52,8 +51,6 @@ function deleteAndAddId() {
 setInterval(deleteAndAddId, 5000);
 
 function setcrash() {
-  io.emit('round_start');
-
   connection.query('SELECT nxt FROM aviset LIMIT 1', (err, result) => {
     if (!err) {
       let nxtcrash = result[0]?.nxt || 0;
@@ -101,19 +98,16 @@ function restartplane() {
       setTimeout(setcrash, 1000);
     }, 4000);
   }, 3000);
-
-  setTimeout(() => {
-    io.emit('round_end');
-  }, finalcrash * 1000);
 }
 
+// ✅ Smoothed crash increment logic
 function updateCrashInfo() {
   const fc = parseFloat(finalcrash);
   const cp = parseFloat(crashPosition);
 
   if (fc > cp) {
-    let increment = 0.01 * Math.pow(cp, 0.8);
-    increment = Math.min(increment, 1);
+    let increment = 0.01 * Math.pow(cp, 0.8); // exponential growth
+    increment = Math.min(increment, 1); // limit it to avoid huge jumps
     crashPosition = (cp + increment).toFixed(2);
     io.emit('crash-update', crashPosition);
   } else {
@@ -122,7 +116,7 @@ function updateCrashInfo() {
 }
 
 function repeatupdate() {
-  fly = setInterval(updateCrashInfo, 50);
+  fly = setInterval(updateCrashInfo, 50); // faster interval, smooth growth
 }
 
 io.on('connection', (socket) => {
@@ -135,10 +129,12 @@ io.on('connection', (socket) => {
     connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
       if (!err && result.length > 0) {
         if (result[0].balance >= amount) {
+          const betamount2 = result[0].balance - amount;
+
           connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
           connection.query(
             `INSERT INTO crashbetrecord (username, amount, balance) VALUES (?, ?, ?)`,
-            [username, amount, 0], // ✅ zero at start
+            [username, amount, betamount2],
             () => {}
           );
         }
@@ -148,24 +144,18 @@ io.on('connection', (socket) => {
 
   socket.on('addWin', (username, amount, winpoint) => {
     connection.query(
-      `SELECT balance FROM users WHERE username = ?`,
+      `SELECT SUM(amount) AS bets FROM crashbetrecord WHERE status ='pending' AND username = ?`,
       [username],
       (err, result) => {
-        if (!err && result.length > 0) {
-          const userBalance = result[0].balance;
-          const winamount = (amount * 0.98) * winpoint;  // net win
+        if (!err && result[0].bets > 0) {
+          const winamount = parseFloat((amount * 98 / 100) * winpoint).toFixed(2);
 
-          const newBalance = userBalance + winamount;
-
-          // ✅ Update user's full balance
           connection.query(
-            const newBalance = userBalance + winamount;
-            `UPDATE users SET balance = ? WHERE username = ?`,
-            [newBalance, username],
+            `UPDATE users SET balance = balance + ? WHERE username = ?`,
+            [winamount, username],
             () => {}
           );
 
-          // ✅ Log only winamount in crashbetrecord
           connection.query(
             `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
             [winamount, winpoint, username],
@@ -182,3 +172,12 @@ setcrash();
 server.listen(port, () => {
   console.log(`Server running at :${port}/`);
 });
+
+
+
+// === Emit Events for Frontend Plane Animation ===
+io.emit('round_start'); // Notify frontend to start plane
+
+setTimeout(() => {
+    io.emit('round_end'); // Notify frontend to stop plane
+}, finalcrash * 1000);
