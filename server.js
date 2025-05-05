@@ -159,6 +159,7 @@ io.on('connection', (socket) => {
 
           // ✅ Update user's full balance
           connection.query(
+            const newBalance = userBalance + winamount;
             `UPDATE users SET balance = ? WHERE username = ?`,
             [newBalance, username],
             () => {}
