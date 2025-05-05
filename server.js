@@ -132,14 +132,32 @@ io.on('connection', (socket) => {
           const betamount2 = result[0].balance - amount;
 
           connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
-          const istTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-const formattedTime = new Date(istTime).toISOString().slice(0, 19).replace('T', ' ');
+
+          function getFormattedISTTime() {
+  const options = { timeZone: 'Asia/Kolkata' };
+  const date = new Date().toLocaleString('en-US', options);
+  const d = new Date(date);
+
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const s = String(d.getSeconds()).padStart(2, '0');
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0'); // Months start at 0
+  const year = d.getFullYear();
+
+  return `${h}:${m}:${s} (${day}:${month}:${year})`;
+}
+
+
         
-  connection.query(
-    `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, NOW())`,
-    [username, amount, betamount2],
-    () => {}
-  );
+  const formattedTime = getFormattedISTTime();
+
+connection.query(
+  `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, ?)`,
+  [username, amount, betamount2, formattedTime],
+  () => {}
+);
 
         }
       }
