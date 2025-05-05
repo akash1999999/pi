@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
       [username],
       (err, result) => {
         if (!err && result[0].bets > 0) {
-          const winamount = parseFloat((amount * 98 / 100) * winpoint).toFixed(2);
+          const winamount = (amount * 98 / 100) * winpoint;
 
           connection.query(
             `UPDATE users SET balance = balance + ? WHERE username = ?`,
