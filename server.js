@@ -142,29 +142,47 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('addWin', (username, amount, winpoint) => {
-    connection.query(
-      `SELECT SUM(amount) AS bets FROM crashbetrecord WHERE status ='pending' AND username = ?`,
-      [username],
-      (err, result) => {
-        if (!err && result[0].bets > 0) {
-          const winamount = parseFloat((amount * 98 / 100) * winpoint).toFixed(2);
+socket.on('addWin', (username, amount, winpoint) => {
+  connection.query(
+    `SELECT SUM(amount) AS bets FROM crashbetrecord WHERE status ='pending' AND username = ?`,
+    [username],
+    (err, result) => {
+      if (!err && result[0].bets > 0) {
+        const winamount = parseFloat((amount * 98 / 100) * winpoint).toFixed(2);
 
-          connection.query(
-            `UPDATE users SET balance = balance + ? WHERE username = ?`,
-            [winamount, username],
-            () => {}
-          );
+        // ✅ Get current balance
+        connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
+          if (!err && result.length > 0) {
+            const currentBalance = parseFloat(result[0].balance);
+            const newBalance = parseFloat(currentBalance + parseFloat(winamount)).toFixed(2);
 
-          connection.query(
-            `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
-            [winamount, winpoint, username],
-            () => {}
-          );
-        }
+            // ✅ Update balance with win included
+            connection.query(
+              `UPDATE users SET balance = ? WHERE username = ?`,
+              [newBalance, username],
+              () => {
+                // ✅ Emit updated info to client
+                socket.emit('winUpdate', {
+                  winamount: parseFloat(winamount),
+                  balance: parseFloat(newBalance),
+                  winpoint: parseFloat(winpoint),
+                });
+
+                // ✅ Update bet record also
+                connection.query(
+                  `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
+                  [newBalance, winpoint, username],
+                  () => {}
+                );
+              }
+            );
+          }
+        });
       }
-    );
-  });
+    }
+  );
+});
+
 });
 
 setcrash();
