@@ -148,38 +148,45 @@ socket.on('addWin', (username, amount, winpoint) => {
     [username],
     (err, result) => {
       if (!err && result[0].bets > 0) {
-        const winamount = parseFloat(((amount * 98) / 100) * winpoint).toFixed(2);
+        // Calculate win amount with full decimal
+        const winamount = ((amount * 98 / 100) * winpoint).toFixed(2);
 
-        connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
-          if (!err && result.length > 0) {
-            const currentBalance = parseFloat(result[0].balance).toFixed(2);
-            const newBalance = (parseFloat(currentBalance) + parseFloat(winamount)).toFixed(2);
+        connection.query(
+          `SELECT balance FROM users WHERE username = ?`,
+          [username],
+          (err, result) => {
+            if (!err && result.length > 0) {
+              const currentBalance = parseFloat(result[0].balance);
+              const totalBalance = (currentBalance + parseFloat(winamount)).toFixed(2);
 
-            // Update user's full new balance
-            connection.query(
-              `UPDATE users SET balance = ? WHERE username = ?`,
-              [newBalance, username],
-              () => {
-                socket.emit('winUpdate', {
-                  winamount: parseFloat(winamount).toFixed(2),
-                  balance: parseFloat(newBalance).toFixed(2),
-                  winpoint: parseFloat(winpoint).toFixed(2),
-                });
+              // ✅ Update users table
+              connection.query(
+                `UPDATE users SET balance = ? WHERE username = ?`,
+                [totalBalance, username],
+                () => {
+                  // ✅ Emit updated values
+                  socket.emit('winUpdate', {
+                    winamount: parseFloat(winamount).toFixed(2),
+                    balance: parseFloat(totalBalance).toFixed(2),
+                    winpoint: parseFloat(winpoint).toFixed(2),
+                  });
 
-                // Also update bet record with full balance
-                connection.query(
-                  `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
-                  [newBalance, winpoint, username],
-                  () => {}
-                );
-              }
-            );
+                  // ✅ Update crashbetrecord
+                  connection.query(
+                    `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
+                    [totalBalance, winpoint, username],
+                    () => {}
+                  );
+                }
+              );
+            }
           }
-        });
+        );
       }
     }
   );
 });
+
 
 
 });
