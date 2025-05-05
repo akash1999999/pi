@@ -133,10 +133,10 @@ io.on('connection', (socket) => {
 
           connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
           connection.query(
-            `INSERT INTO crashbetrecord (username, amount, balance) VALUES (?, ?, ?)`,
-            [username, amount, betamount2],
-            () => {}
-          );
+  `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, NOW())`,
+  [username, amount, betamount2],
+  () => {}
+);
         }
       }
     });
