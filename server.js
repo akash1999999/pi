@@ -133,10 +133,10 @@ io.on('connection', (socket) => {
 
           connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
           connection.query(
-  `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
-  [winamount, winpoint, username],
-  () => {}
-);
+            `INSERT INTO crashbetrecord (username, amount, balance) VALUES (?, ?, ?)`,
+            [username, amount, betamount2],
+            () => {}
+          );
         }
       }
     });
@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
       [username],
       (err, result) => {
         if (!err && result[0].bets > 0) {
-          const winamount = (amount * 98 / 100) * winpoint;
+          const winamount = parseFloat((amount * 98 / 100) * winpoint).toFixed(2);
 
           connection.query(
             `UPDATE users SET balance = balance + ? WHERE username = ?`,
@@ -157,10 +157,10 @@ io.on('connection', (socket) => {
           );
 
           connection.query(
-  `INSERT INTO crashbetrecord (username, amount, balance) VALUES (?, ?, ?)`,
-  [username, amount, 0], // ← balance should be 0 or NULL initially
-  () => {}
-);
+            `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
+            [winamount, winpoint, username],
+            () => {}
+          );
         }
       }
     );
