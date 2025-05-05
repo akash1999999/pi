@@ -157,10 +157,10 @@ io.on('connection', (socket) => {
           );
 
           connection.query(
-            `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
-            [winamount, winpoint, username],
-            () => {}
-          );
+  `INSERT INTO crashbetrecord (username, amount, balance) VALUES (?, ?, ?)`,
+  [username, amount, 0], // ← balance should be 0 or NULL initially
+  () => {}
+);
         }
       }
     );
