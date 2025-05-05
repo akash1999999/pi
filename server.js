@@ -126,7 +126,6 @@ function repeatupdate() {
 io.on('connection', socket => {
   clients.push(socket.id);
   socket.emit('working', 'ACTIVE...!');
-  socket.emit("syncX", crashPosition);  // 🔁 Send current X when someone connects
 
   socket.on('disconnect', () => {});
 
