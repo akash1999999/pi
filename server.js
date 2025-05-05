@@ -132,11 +132,13 @@ io.on('connection', (socket) => {
           const betamount2 = result[0].balance - amount;
 
           connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
-          connection.query(
-  `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, NOW())`,
-  [username, amount, betamount2],
-  () => {}
-);
+         connection.query("SET time_zone = '+05:30'", () => {
+  connection.query(
+    `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, NOW())`,
+    [username, amount, betamount2],
+    () => {}
+  );
+});
         }
       }
     });
