@@ -51,6 +51,12 @@ function deleteAndAddId() {
 }
 setInterval(deleteAndAddId, 5000);
 
+io.on("connection", (socket) => {
+  socket.on("request-sync", () => {
+    socket.emit("sync-crash", crashPosition);
+  });
+});
+
 function setcrash() {
   connection.query('SELECT nxt FROM aviset LIMIT 1', (err, result) => {
     if (!err) {
