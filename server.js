@@ -14,7 +14,6 @@ let finalcrash = 0;
 let fly;
 let betamount = 0;
 let clients = [];
-let lastBroadcastTime = Date.now();
 
 const db_config = {
   host: '184.168.115.30',
@@ -57,26 +56,30 @@ function setcrash() {
     if (!err) {
       let nxtcrash = result[0]?.nxt || 0;
       if (nxtcrash == 0) {
-        betamount = Math.random() * 100; // Simulating bet amount for testing
-        finalcrash = (betamount == 0) ? Math.floor(Math.random() * 6) + 2 : (Math.random() * 0.5 + 1).toFixed(2);
+        connection.query(
+          `SELECT SUM(amount) AS total FROM crashbetrecord WHERE status = 'pending'`,
+          (err, result) => {
+            if (!err) {
+              betamount = result[0].total || 0;
+              finalcrash = (betamount == 0) ? Math.floor(Math.random() * 6) + 2 : (Math.random() * 0.5 + 1).toFixed(2);
+              io.emit('round_start', finalcrash);
+              repeatupdate();
+            }
+          }
+        );
       } else {
         finalcrash = parseFloat(nxtcrash);
+        io.emit('round_start', finalcrash);
+        repeatupdate();
       }
-      io.emit('round_start', finalcrash);
-      repeatupdate();
     }
   });
 }
 
 function broadcastGameState() {
-  const currentTime = Date.now();
-  if (currentTime - lastBroadcastTime >= 1000) {  // Broadcast every second
-    io.emit('game_state', { crashPosition, finalcrash });
-    lastBroadcastTime = currentTime;
-  }
+  io.emit('game_state', { crashPosition, finalcrash });
 }
-
-setInterval(broadcastGameState, 100);  // Continuously broadcast game state
+setInterval(broadcastGameState, 1000);  // Broadcast every second
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
