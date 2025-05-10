@@ -14,7 +14,6 @@ let finalcrash = 0;
 let fly;
 let betamount = 0;
 let clients = [];
-let isPaused = false;
 
 const db_config = {
   host: '184.168.115.30',
@@ -28,14 +27,14 @@ let connection;
 
 function handleDisconnect() {
   connection = mysql.createConnection(db_config);
-  connection.connect(err => {
+  connection.connect((err) => {
     if (err) {
       console.log('DB connection error:', err);
       setTimeout(handleDisconnect, 2000);
     }
   });
 
-  connection.on('error', err => {
+  connection.on('error', (err) => {
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
       handleDisconnect();
     } else {
@@ -45,48 +44,12 @@ function handleDisconnect() {
 }
 handleDisconnect();
 
-function clearFlyInterval() {
-  if (fly) {
-    clearInterval(fly);
-    fly = null;
-  }
-}
-
-function startFlyInterval() {
-  clearFlyInterval();
-  fly = setInterval(updateCrashInfo, 50);
-}
-
 function deleteAndAddId() {
   connection.query('DELETE FROM bet', () => {
     connection.query('INSERT INTO bet (id) VALUES (1)', () => {});
   });
 }
 setInterval(deleteAndAddId, 5000);
-
-io.on("connection", (socket) => {
-  clients.push(socket.id);
-  socket.emit('working', 'ACTIVE...!');
-
-  socket.on("request-sync", () => {
-    socket.emit("sync-crash", crashPosition);
-  });
-
-  socket.on("visibility-change", (isVisible) => {
-    if (isVisible) {
-      isPaused = false;
-      startFlyInterval();
-      socket.emit("sync-crash", crashPosition);
-    } else {
-      isPaused = true;
-      clearFlyInterval();
-    }
-  });
-
-  socket.on('disconnect', () => {
-    clients = clients.filter(client => client !== socket.id);
-  });
-});
 
 function setcrash() {
   connection.query('SELECT nxt FROM aviset LIMIT 1', (err, result) => {
@@ -98,66 +61,41 @@ function setcrash() {
           (err, result) => {
             if (!err) {
               betamount = result[0].total || 0;
-              finalcrash = betamount == 0 ? Math.floor(Math.random() * 6) + 2 : (Math.random() * 0.5 + 1).toFixed(2);
+              finalcrash = (betamount == 0) ? Math.floor(Math.random() * 6) + 2 : (Math.random() * 0.5 + 1).toFixed(2);
               io.emit('round_start', finalcrash);
-              startFlyInterval();
+              repeatupdate();
             }
           }
         );
       } else {
         finalcrash = parseFloat(nxtcrash);
         io.emit('round_start', finalcrash);
-        startFlyInterval();
-        connection.query(`DELETE FROM aviset LIMIT 1`, () => {});
+        repeatupdate();
       }
     }
   });
 }
 
-function restartplane() {
-  clearFlyInterval();
-  connection.query(`INSERT INTO crashgamerecord (crashpoint) VALUES (?)`, [crashPosition], () => {});
-  io.emit('updatehistory', crashPosition);
-
-  setTimeout(() => {
-    connection.query(`UPDATE crashbetrecord SET status = 'fail', winpoint=? WHERE status = 'pending'`, [crashPosition], () => {});
-    io.volatile.emit('reset', 'resetting plane.....');
-    io.emit('round_end');
-  }, 200);
-
-  setTimeout(() => {
-    io.emit('removecrash');
-    setTimeout(() => {
-      io.emit('prepareplane');
-      crashPosition = 0.99;
-      io.emit('flyplane');
-      setTimeout(setcrash, 1000);
-    }, 4000);
-  }, 3000);
+function broadcastGameState() {
+  io.emit('game_state', { crashPosition, finalcrash });
 }
+setInterval(broadcastGameState, 1000);  // Broadcast every second
 
-function updateCrashInfo() {
-  if (isPaused) return;
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
 
-  const fc = parseFloat(finalcrash);
-  const cp = parseFloat(crashPosition);
+  // Send current game state when a client reconnects
+  socket.emit('game_state', { crashPosition, finalcrash });
 
-  if (fc > cp) {
-    let increment = 0.01 * Math.pow(cp, 0.8);
-    increment = Math.min(increment, 1);
-    crashPosition = (cp + increment).toFixed(2);
-    io.emit('crash-update', crashPosition);
-  } else {
-    restartplane();
-  }
-}
+  socket.on('request_game_state', () => {
+    socket.emit('game_state', { crashPosition, finalcrash });
+  });
 
-function repeatupdate() {
-  startFlyInterval();
-}
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
 
-setcrash();
-
-server.listen(port, () => {
-  console.log(`Server running at :${port}/`);
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
 });
