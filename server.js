@@ -14,6 +14,7 @@ let finalcrash = 0;
 let fly;
 let betamount = 0;
 let clients = [];
+let isPaused = false;
 
 const db_config = {
   host: '184.168.115.30',
@@ -71,8 +72,15 @@ io.on("connection", (socket) => {
     socket.emit("sync-crash", crashPosition);
   });
 
-  socket.on("visibility-change", () => {
-    socket.emit("sync-crash", crashPosition);
+  socket.on("visibility-change", (isVisible) => {
+    if (isVisible) {
+      isPaused = false;
+      startFlyInterval();
+      socket.emit("sync-crash", crashPosition);
+    } else {
+      isPaused = true;
+      clearFlyInterval();
+    }
   });
 
   socket.on('disconnect', () => {
@@ -129,6 +137,8 @@ function restartplane() {
 }
 
 function updateCrashInfo() {
+  if (isPaused) return;
+
   const fc = parseFloat(finalcrash);
   const cp = parseFloat(crashPosition);
 
