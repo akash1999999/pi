@@ -68,21 +68,15 @@ function setcrash() {
                 finalcrash = (Math.random() * 0.5 + 1).toFixed(2);
               }
 
-              // → emit one “round-start” with total flight duration and target multiplier
-              const durationMs = 10000;  // total flight time in ms (tweak as needed)
-              io.emit('round-start', { durationMs, finalMult: finalcrash });
-              // → schedule a single “round-crash” after that duration
-              setTimeout(() => io.emit('round-crash'), durationMs);
+              io.emit('round_start', finalcrash);
+              repeatupdate();
             }
           }
         );
       } else {
         finalcrash = parseFloat(nxtcrash);
-        // → emit one “round-start” with total flight duration and target multiplier
-        const durationMs = 10000;  // total flight time in ms (tweak as needed)
-        io.emit('round-start', { durationMs, finalMult: finalcrash });
-        // → schedule a single “round-crash” after that duration
-        setTimeout(() => io.emit('round-crash'), durationMs);
+        io.emit('round_start', finalcrash);
+        repeatupdate();
         connection.query(`DELETE FROM aviset LIMIT 1`, () => {});
       }
     }
