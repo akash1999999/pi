@@ -1,4 +1,3 @@
-
 const http = require('http');
 const socketIO = require('socket.io');
 const mysql = require('mysql');
@@ -44,147 +43,20 @@ function handleDisconnect() {
 }
 handleDisconnect();
 
-function deleteAndAddId() {
-  connection.query('DELETE FROM bet', () => {
-    connection.query('INSERT INTO bet (id) VALUES (1)', () => {});
-  });
-}
-setInterval(deleteAndAddId, 5000);
-
-function setcrash() {
-  connection.query('SELECT nxt FROM aviset LIMIT 1', (err, result) => {
-    if (!err) {
-      let nxtcrash = result[0]?.nxt || 0;
-      if (nxtcrash == 0) {
-        connection.query(
-          `SELECT SUM(amount) AS total FROM crashbetrecord WHERE status = 'pending'`,
-          (err, result) => {
-            if (!err) {
-              betamount = result[0].total || 0;
-
-              if (betamount == 0) {
-                finalcrash = Math.floor(Math.random() * 6) + 2;
-              } else {
-                finalcrash = (Math.random() * 0.5 + 1).toFixed(2);
-              }
-
-              io.emit('round_start', finalcrash);
-              repeatupdate();
-            }
-          }
-        );
-      } else {
-        finalcrash = parseFloat(nxtcrash);
-        io.emit('round_start', finalcrash);
-        repeatupdate();
-        connection.query(`DELETE FROM aviset LIMIT 1`, () => {});
-      }
-    }
-  });
-}
-
-function restartplane() {
-  clearInterval(fly);
-  connection.query(`INSERT INTO crashgamerecord (crashpoint) VALUES (?)`, [crashPosition], () => {});
+// Continuously broadcast the current crash position to all clients
+setInterval(() => {
   io.emit('updatehistory', crashPosition);
+}, 100);
 
-  setTimeout(() => {
-    connection.query(`UPDATE crashbetrecord SET status = 'fail', winpoint=? WHERE status = 'pending'`, [crashPosition], () => {});
-    io.volatile.emit('reset', 'resetting plane.....');
-    io.emit('round_end');
-  }, 200);
+io.on('connection', (socket) => {
+  console.log('New client connected');
+  socket.emit('updatehistory', crashPosition);
 
-  setTimeout(() => {
-    io.emit('removecrash');
-    setTimeout(() => {
-      io.emit('prepareplane');
-      crashPosition = 0.99;
-      io.emit('flyplane');
-      setTimeout(setcrash, 1000);
-    }, 4000);
-  }, 3000);
-}
-
-function updateCrashInfo() {
-  const fc = parseFloat(finalcrash);
-  const cp = parseFloat(crashPosition);
-
-  if (fc > cp) {
-    let increment = 0.01 * Math.pow(cp, 0.8);
-    increment = Math.min(increment, 1);
-    crashPosition = (cp + increment).toFixed(2);
-    io.emit('crash-update', crashPosition);
-  } else {
-    restartplane();
-  }
-}
-
-function repeatupdate() {
-  fly = setInterval(updateCrashInfo, 50);
-}
-
-io.on('connection', socket => {
-  clients.push(socket.id);
-  socket.emit('working', 'ACTIVE...!');
-
-  socket.on('disconnect', () => {});
-
-  socket.on('newBet', (username, amount) => {
-    connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
-      if (!err && result.length > 0 && result[0].balance >= amount) {
-        const betamount2 = result[0].balance - amount;
-        connection.query(`UPDATE users SET balance = balance - ? WHERE username = ?`, [amount, username], () => {});
-
-        const formattedTime = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Kolkata' }).replace(',', '');
-        connection.query(
-          `INSERT INTO crashbetrecord (username, amount, balance, time) VALUES (?, ?, ?, ?)`,
-          [username, amount, betamount2, formattedTime],
-          () => {}
-        );
-      }
-    });
-  });
-
-  socket.on('addWin', (username, amount, winpoint) => {
-    connection.query(
-      `SELECT SUM(amount) AS bets FROM crashbetrecord WHERE status ='pending' AND username = ?`,
-      [username],
-      (err, result) => {
-        if (!err && result[0].bets > 0) {
-          const winamount = ((amount * 98 / 100) * winpoint).toFixed(2);
-
-          connection.query(`SELECT balance FROM users WHERE username = ?`, [username], (err, result) => {
-            if (!err && result.length > 0) {
-              const currentBalance = parseFloat(result[0].balance);
-              const totalBalance = (currentBalance + parseFloat(winamount)).toFixed(2);
-
-              connection.query(
-                `UPDATE users SET balance = ? WHERE username = ?`,
-                [totalBalance, username],
-                () => {
-                  socket.emit('winUpdate', {
-                    winamount: parseFloat(winamount).toFixed(2),
-                    balance: parseFloat(totalBalance).toFixed(2),
-                    winpoint: parseFloat(winpoint).toFixed(2),
-                  });
-
-                  connection.query(
-                    `UPDATE crashbetrecord SET status = 'success', balance = ?, winpoint = ? WHERE username = ? AND status = 'pending'`,
-                    [totalBalance, winpoint, username],
-                    () => {}
-                  );
-                }
-              );
-            }
-          });
-        }
-      }
-    );
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
   });
 });
 
-setcrash();
-
-server.listen(port, () => {
-  console.log(`Server running at :${port}/`);
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
 });
